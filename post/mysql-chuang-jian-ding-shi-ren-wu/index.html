@@ -1,0 +1,322 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+<meta name="description" content=""/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<title>MySQL创建定时任务 | 洛颍希de杂记</title>
+
+<link rel="shortcut icon" href="https://loyingxi.github.io/favicon.ico?v=1658484148289">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://loyingxi.github.io/styles/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dart.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script>
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <div class="navbar-brand">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            洛颍希de杂记
+        </div>
+    </div>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+                <div class="nav-item">
+                    
+                        <a href="/" class="menu gt-a-link">
+                            首页
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/archives" class="menu gt-a-link">
+                            归档
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/tags" class="menu gt-a-link">
+                            标签
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/post/about" class="menu gt-a-link">
+                            关于
+                        </a>
+                    
+                </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1658484148289" action="/search/index.html">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    MySQL创建定时任务
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2022-07-11 ·
+                    </time>
+                    
+                        <a href="https://loyingxi.github.io/tag/vFVoonL6Z/" class="post-tags">
+                            # mysql
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h1 id="mysql创建定时任务">MySQL创建定时任务</h1>
+<!-- more -->
+<p><strong>一、前言</strong></p>
+<p>自MySQL5.1.6起，增加了一个非常有特色的功能-事件调度器（Event Scheduler），可以用做定时执行某些特定任务（例如：删除记录、对数据进行汇总、数据备份等等），来取代原先只能由操作系统的计划任务来执行的工作。更值得一提的是MySQL的事件调度器可以精确到每秒钟执行一个任务，而操作系统的计划任务（如：Linux的cron或Windows下的任务计划）只能精确到每分钟执行一次。对于一些对数据实时性要求比较高的应用（例如：股票、赔率、比分等）就非常适合。</p>
+<p>事件调度器有时也可以称为临时触发器（temporal triggers），因为事件调度器是基于特定时间周期触发来执行某些任务，而触发器（Triggers）是基于某个表所产生的事件触发的，区别也就在这里。</p>
+<p>1、在使用这个功能之前必须确保event_scheduler已开启，可执行</p>
+<p>SET GLOBAL event_scheduler = 1;<br>
+　　 ---或我们可以在配置my.cnf文件 中加上 event_scheduler = 1</p>
+<p>或</p>
+<p>SET GLOBAL event_scheduler = ON;<br>
+　　来开启，也可以直接在启动命令加上“--event_scheduler=1”，例如：<br>
+　　mysqld ... --event_scheduler=1</p>
+<p>注：将事件计划关闭：SET GLOBAL event_scheduler = 0;</p>
+<p>2、要查看当前是否已开启事件调度器，可执行如下SQL：<br>
+　　SHOW VARIABLES LIKE 'event_scheduler';<br>
+　　或<br>
+　　SELECT @@event_scheduler;<br>
+　　或<br>
+　　SHOW PROCESSLIST;</p>
+<p>注：</p>
+<p>（1）关闭事件任务： <code>ALTER EVENT eventName ON COMPLETION PRESERVE DISABLE;</code></p>
+<p>（2）开启事件任务：<code>ALTER EVENT eventName ON COMPLETION PRESERVE ENABLE;</code></p>
+<p>（3）查看事件任务：SHOW EVENTS ;</p>
+<p><strong>二、创建事件</strong></p>
+<p>先来看一下他的语法：</p>
+<pre><code class="language-mysql">CREATE EVENT [IFNOT EXISTS] event_name
+　　 ONSCHEDULE schedule
+　　 [ONCOMPLETION [NOT] PRESERVE]
+　　 [ENABLE | DISABLE]
+　　 [COMMENT 'comment']
+　　 DO sql_statement;
+</code></pre>
+<p></p>
+<pre><code class="language-mysql">schedule:
+　　 AT TIMESTAMP [+ INTERVAL INTERVAL]
+　　 | EVERY INTERVAL [STARTS TIMESTAMP] [ENDS TIMESTAMP]
+　　
+　　INTERVAL:
+　　 quantity {YEAR | QUARTER | MONTH | DAY | HOUR | MINUTE |
+　　 WEEK | SECOND | YEAR_MONTH | DAY_HOUR | DAY_MINUTE |
+　　 DAY_SECOND | HOUR_MINUTE | HOUR_SECOND | MINUTE_SECOND}
+</code></pre>
+<p>1) 首先来看一个简单的例子来演示每秒插入一条记录到数据表</p>
+<pre><code class="language-mysql">USE td2;
+CREATE TABLE aaa(timeline TIMESTAMP);
+CREATE EVENT e_test_insert
+ON SCHEDULE EVERY 1 SECOND
+DO INSERT aaa VALUE(CURRENT_TIMESTAMP);
+</code></pre>
+<p>等待3秒之后，再执行查询看看</p>
+<pre><code class="language-mysql">SELECT * FROM aaa;
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://img2018.cnblogs.com/blog/1211355/201809/1211355-20180917180933393-705578069.png" alt="img" loading="lazy"></figure>
+<p>2) 5天后清空test表：</p>
+<pre><code class="language-mysql">CREATE EVENT e_test
+ON SCHEDULE AT CURRENT_TIMESTAMP+INTERVAL 5 DAY
+DO TRUNCATE TABLE aaa;
+</code></pre>
+<p>3) 2007年7月20日12点整清空test表：</p>
+<pre><code class="language-mysql">CREATE EVENT e_test1
+ON SCHEDULE AT TIMESTAMP '2018-09-17 18:16:00'
+DO TRUNCATE TABLE aaa;
+</code></pre>
+<p>4) 每天定时清空test表：</p>
+<pre><code class="language-mysql">CREATE EVENT e_test2
+ON SCHEDULE EVERY 1 DAY
+DO TRUNCATE aaa;
+</code></pre>
+<p>5) 5天后开启每天定时清空test表：</p>
+<pre><code class="language-mysql">CREATE EVENT e_test3
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP+INTERVAL 5 DAY
+DO TRUNCATE aaa;
+</code></pre>
+<p>6) 每天定时清空test表，5天后停止执行：</p>
+<pre><code class="language-mysql">CREATE EVENT e_test4
+ON SCHEDULE EVERY 1 DAY
+ENDS CURRENT_TIMESTAMP+INTERVAL 5 DAY
+DO TRUNCATE aaa;
+</code></pre>
+<p>7) 5天后开启每天定时清空test表，一个月后停止执行：</p>
+<pre><code class="language-mysql">CREATE EVENT e_test5
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP+INTERVAL 5 DAY
+ENDS CURRENT_TIMESTAMP+INTERVAL 1 MONTH
+DO TRUNCATE aaa;
+</code></pre>
+<p>[ON COMPLETION [NOT] PRESERVE]可以设置这个事件是执行一次还是持久执行，默认为NOT PRESERVE。</p>
+<p>8) 每天定时清空test表(只执行一次，任务完成后就终止该事件)：</p>
+<pre><code class="language-mysql">CREATE EVENT e_test6
+ON SCHEDULE EVERY 1 DAY
+ON COMPLETION NOT PRESERVE
+DO TRUNCATE aaa;
+</code></pre>
+<p>[ENABLE | DISABLE]可以设置该事件创建后状态是否开启或关闭，默认为ENABLE。<br>
+　　[COMMENT ‘comment’]可以给该事件加上注释。</p>
+<p><strong>三、修改事件</strong></p>
+<p>先来看一下他的语法：</p>
+<pre><code class="language-mysql">ALTER EVENT event_name
+  　　 [ONSCHEDULE schedule]
+  　　 [RENAME TOnew_event_name]
+  　　 [ON COMPLETION [NOT] PRESERVE]
+  　　 [COMMENT 'comment']
+  　　 [ENABLE | DISABLE]
+  　　 [DO sql_statement]
+</code></pre>
+<p>1) 临时关闭事件</p>
+<pre><code class="language-mysql">ALTER EVENT e_test DISABLE;
+</code></pre>
+<p>2) 开启事件</p>
+<pre><code class="language-mysql">ALTER EVENT e_test ENABLE;
+</code></pre>
+<p>3) 将每天清空test表改为5天清空一次：</p>
+<pre><code class="language-mysql">ALTER EVENT e_test
+ON SCHEDULE EVERY 5 DAY;
+</code></pre>
+<p></p>
+<p><strong>四、删除事件</strong></p>
+<p>先来看一下他的语法：</p>
+<pre><code class="language-mysql">DROP EVENT [IF EXISTS] event_name
+</code></pre>
+<p>例如删除前面创建的e_test事件</p>
+<pre><code class="language-mysql">DROP EVENT e_test;
+</code></pre>
+<p>当然前提是这个事件存在，否则会产生ERROR 1513 (HY000): Unknown event错误，因此最好加上IF EXISTS</p>
+<pre><code class="language-mysql">DROP EVENT IF EXISTS e_test;
+</code></pre>
+<p>注意：如果你将event执行了Alter event event_name disable.那么当你重新启动mysql服务<br>
+器后，该event将被删除（测试版本：5.1.30）</p>
+<p>备注：在event事件中：ON SCHEDULE 计划任务，有两种设定计划任务的方式：</p>
+<p>（1）AT 时间戳，用来完成单次的计划任务</p>
+<p>（2）EVERY 时间（单位）的数量实践单位[STARTS 时间戳] [ENDS时间戳]，用来完成重复的计划任务。</p>
+<p>在两种计划任务中，时间戳可以是任意的TIMESTAMP 和DATETIME 数据类型，时间戳需要大于当前时间。<br>
+　　在重复的计划任务中，时间（单位）的数量可以是任意非空（Not Null）的整数式，时间单位是关键词：YEAR，MONTH，DAY，HOUR，MINUTE 或者SECOND。</p>
+<p>提示: 其他的时间单位也是合法的如：QUARTER, WEEK, YEAR_MONTH,DAY_HOUR,DAY_MINUTE,DAY_SECOND,HOUR_MINUTE,HOUR_SECOND, MINUTE_SECOND，不建议使用这些不标准的时间单位。</p>
+<p>[ON COMPLETION [NOT] PRESERVE]：ON COMPLETION参数表示&quot;当这个事件不会再发生的时候&quot;，即当单次计划任务执行完毕后或当重复性的计划任务执行到了ENDS阶段。而PRESERVE的作用是使事件在执行完毕后不会被Drop掉，建议使用该参数，以便于查看EVENT具体信息。</p>
+<p><strong>五、应用案例</strong></p>
+<p>本案例是利用 event scheduler 的特性，每秒钟调用一次存储过程，用于判断 SLAVE 是否正常运行，如果发现 SLAVE 关闭了，忽略 0 次错误，然后重新启动 SLAVE。</p>
+<p>1）首先创建存储过程</p>
+<pre><code class="language-mysql">CREATE PROCEDURE Slave_Monitor()
+BEGIN
+SELECT VARIABLE_VALUE INTO @SLAVE_STATUS
+FROM information_schema.GLOBAL_STATUS
+WHERE VARIABLE_NAME='SLAVE_RUNNING';
+IF('ON'!=@SLAVE_STATUS) THEN
+SET GLOBAL SQL_SLAVE_SKIP_COUNTER=0;
+SLAVE START;
+END IF;
+END;
+</code></pre>
+<p>由于存储过程中无法调用类似 SHOW SLAVE STATUS 这样的语句，因此无法得到确切的复制错误信息和错误代码，不能进一步的处理 SLAVE 停止的各种情况。</p>
+<p>2）接着，创建任务</p>
+<pre><code class="language-mysql">CREATE EVENT IF NOT EXISTS Slave_Monitor
+ON SCHEDULE EVERY 5 SECOND
+ON COMPLETION PRESERVE
+DO
+CALL Slave_Monitor();
+</code></pre>
+<p>创建了一个任务，每 5秒钟执行一次，任务结束后依旧保留该任务，而不是删除。当然了，在本例中的任务不会结束，除非将它手动禁止了。</p>
+<p>如果在运行中想要临时关闭一下某个任务，执行 ALTER EVENT 语句即可：</p>
+<pre><code class="language-mysql">ALTER EVENT Slave_Monitor ON COMPLETION PRESERVE DISABLE; ##关闭事件ALTER EVENT Slave_Monitor ON COMPLETION PRESERVE ENABLE; ##开启事件
+</code></pre>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://loyingxi.github.io/post/shi-yong-cloudflare-zhi-zuo-jing-xiang-zhan/" class="post-title gt-a-link">
+                    使用cloudflare制作“镜像站”
+                </a>
+            </div>
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first">谷神不死，是谓玄牝</div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/loyingxi" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        &copy 2022 洛颍希	&nbsp;	&nbsp;
+</br><span id="jinrishici-sentence">正在加载今日诗词....</span>
+<script src="https://sdk.jinrishici.com/v2/browser/jinrishici.js" charset="utf-8"></script>
+    </div>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

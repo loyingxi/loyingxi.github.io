@@ -1,0 +1,236 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+<meta name="description" content=""/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<title>软件更新设计思路 | 洛颍希de杂记</title>
+
+<link rel="shortcut icon" href="https://loyingxi.github.io/favicon.ico?v=1658484148289">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://loyingxi.github.io/styles/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dart.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script>
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <div class="navbar-brand">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            洛颍希de杂记
+        </div>
+    </div>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+                <div class="nav-item">
+                    
+                        <a href="/" class="menu gt-a-link">
+                            首页
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/archives" class="menu gt-a-link">
+                            归档
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/tags" class="menu gt-a-link">
+                            标签
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/post/about" class="menu gt-a-link">
+                            关于
+                        </a>
+                    
+                </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1658484148289" action="/search/index.html">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    软件更新设计思路
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2022-07-12 ·
+                    </time>
+                    
+                        <a href="https://loyingxi.github.io/tag/aEG0xcS6r/" class="post-tags">
+                            # C#
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h4 id="更新文件方法">更新文件方法</h4>
+<p>在确定存在新版本以后，下一步就是更新本地文件。方法同样也很多，就只说我自己的思路吧。</p>
+<!-- more -->
+<p>更新程序和主程序分离，为两个独立的EXE，更新在主程序根目录下的一个文件夹内。在主程序打开更新程序验证完更新信息开始下载以后，首先关闭主程序，然后遍历根目录下所有文件，遇到文件便删除，遇到文件夹不做任何操作（建立文件夹存放更新程序的原因），然后便从远程地址下载程序压缩包到更新文件夹，解压到主程序根目录，删除压缩包，最后退出更新程序打开主程序（当然不是最开始的那个主程序了）。</p>
+<p>这就是全部思路，梳理完后你会发现其实实现更新功能很简单。</p>
+<h2 id="实现代码">实现代码</h2>
+<p>我只给关键的代码，也不会说该放哪些控件。本文中所有代码均在SuperBuster项目中。</p>
+<h3 id="判断更新">判断更新</h3>
+<pre><code class="language-c#">//此处自定义函数HttpGet
+public static string HttpGet(string url)
+        {
+            Encoding encoding = Encoding.UTF8;//编码方式，此处为UTF-8
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);//创建Http请求
+            request.Method = &quot;GET&quot;;//请求方法，此处为GET
+            request.Accept = &quot;text/html, application/xhtml+xml, */*&quot;;//媒体类型
+            request.ContentType = &quot;application/json&quot;;//JSON数据格式
+            request.Timeout = 20000;//超时时间,以毫秒为单位
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();//发送请求
+            using (StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+            {
+                return reader.ReadToEnd();//返回数据
+            }
+        }
+</code></pre>
+<p>全局变量Version（字符串）为当前程序版本。获取文件内容，将html文件中的版本号用全局变量b（字符串）储存，通过两变量对比判断更新。</p>
+<pre><code class="language-c#">                try
+                {
+                    button1.Enabled = false;
+                    label1.Text = &quot;正在检查更新......&quot;;
+                    b = HttpGet(&quot;http://www.loyingxi.eu.org/AppVersion.html&quot;);
+                    if (b != Version)
+                    {
+                        MessageBox.Show(&quot;发现新版本！最新版本为：&quot; + b, &quot;提示&quot;);
+                        button1.Enabled = true;
+                        button2.Enabled = true;
+                    }
+                    else
+                    {
+                        MessageBox.Show(&quot;当前为最新版本！&quot;, &quot;提示&quot;);
+                        button1.Enabled = true;
+                    }
+                }
+                catch
+                {
+                    MessageBox.Show(&quot;未知错误！&quot;, &quot;提示&quot;);
+                    button1.Enabled = true;
+                }
+</code></pre>
+<h3 id="删除旧版本文件">删除旧版本文件</h3>
+<p>首先获取父目录，因为更新程序在主程序根目录下的子目录中。然后遍历所有文件以及目录。因为项目中只有一个文件夹（存放更新程序），所以遇到目录不处理就好，遇到文件便删除。不同项目设计不同，如果你的项目中根目录下的目录不止更新目录一个，那么就要费点心重新想重新写了（当然还有很多种方法）。</p>
+<pre><code class="language-c#">                DirectoryInfo info = new DirectoryInfo(Application.StartupPath);
+                string a = info.Parent.FullName;
+                DirectoryInfo dir = new DirectoryInfo(a);
+                FileSystemInfo[] fileinfo = dir.GetFileSystemInfos();
+                foreach (FileSystemInfo i in fileinfo)
+                {
+                    if (i is DirectoryInfo)
+                    {
+                    }
+                    else
+                    {
+                        File.Delete(i.FullName);
+                    }
+                }
+</code></pre>
+<h3 id="下载新版本压缩包">下载新版本压缩包</h3>
+<p>下载文件本来是很复杂的操作，要写很多代码，但是WebClient类让下载变得非常轻松。通过WebClient把新版本压缩包下载保存到更新程序所在的目录。</p>
+<pre><code>                WebClient webClient = new WebClient();
+                webClient.DownloadFile(new Uri(&quot;http://www.loyingxi.eu.org/files/App.zip&quot;), &quot;Latest.zip&quot;);
+</code></pre>
+<h3 id="解压压缩包">解压压缩包</h3>
+<p>通过ZipFile类，解压文件到原来的主程序根目录下，然后删除压缩包。</p>
+<pre><code>                ZipFile.ExtractToDirectory(Directory.GetCurrentDirectory() + &quot;/Latest.zip&quot;, a);
+                File.Delete(&quot;Latest.zip&quot;);
+</code></pre>
+<p>更新功能到此就完成了，非常的简单。当然这个例子中仍然有很多不足的地方，比如如果主程序根目录下不止一个子目录，要增加额外的判断或者换思路，没有备份，如果更新失败如中途退出，那么删除的文件无法恢复等等。大家可以自己完善！</p>
+
+                </div>
+            </article>
+        </div>
+
+        
+            <div class="next-post">
+                <div class="next gt-c-content-color-first">下一篇</div>
+                <a href="https://loyingxi.github.io/post/mian-fei-shen-qing-ding-ji-yu-ming/" class="post-title gt-a-link">
+                    免费申请顶级域名
+                </a>
+            </div>
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first">谷神不死，是谓玄牝</div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/loyingxi" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        &copy 2022 洛颍希	&nbsp;	&nbsp;
+</br><span id="jinrishici-sentence">正在加载今日诗词....</span>
+<script src="https://sdk.jinrishici.com/v2/browser/jinrishici.js" charset="utf-8"></script>
+    </div>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+    </div>
+</div>
+</body>
+</html>

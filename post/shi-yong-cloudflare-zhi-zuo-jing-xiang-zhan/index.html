@@ -1,0 +1,314 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+<meta name="description" content=""/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+<title>使用cloudflare制作“镜像站” | 洛颍希de杂记</title>
+
+<link rel="shortcut icon" href="https://loyingxi.github.io/favicon.ico?v=1658484148289">
+
+<link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://loyingxi.github.io/styles/main.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/css/bootstrap.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets/highlight.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dockerfile.min.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.10/languages/dart.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/moment@2.27.0/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.min.js"></script>
+<!-- DEMO JS -->
+<!--<script src="media/scripts/index.js"></script>-->
+
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.css">
+</head>
+<body>
+<div class="main gt-bg-theme-color-first">
+    <nav class="navbar navbar-expand-lg">
+    <div class="navbar-brand">
+        <img class="user-avatar" src="/images/avatar.png" alt="头像">
+        <div class="site-name gt-c-content-color-first">
+            洛颍希de杂记
+        </div>
+    </div>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <i class="fas fa-bars gt-c-content-color-first" style="font-size: 18px"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <div class="navbar-nav mr-auto" style="text-align: center">
+            
+                <div class="nav-item">
+                    
+                        <a href="/" class="menu gt-a-link">
+                            首页
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/archives" class="menu gt-a-link">
+                            归档
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/tags" class="menu gt-a-link">
+                            标签
+                        </a>
+                    
+                </div>
+            
+                <div class="nav-item">
+                    
+                        <a href="/post/about" class="menu gt-a-link">
+                            关于
+                        </a>
+                    
+                </div>
+            
+        </div>
+        <div style="text-align: center">
+            <form id="gridea-search-form" style="position: relative" data-update="1658484148289" action="/search/index.html">
+                <input class="search-input" autocomplete="off" spellcheck="false" name="q" placeholder="搜索文章" />
+                <i class="fas fa-search gt-c-content-color-first" style="position: absolute; top: 9px; left: 10px;"></i>
+            </form>
+        </div>
+    </div>
+</nav>
+
+    <div class="post-container">
+        <div class="post-detail gt-bg-theme-color-second">
+            <article class="gt-post-content">
+                <h2 class="post-title">
+                    使用cloudflare制作“镜像站”
+                </h2>
+                <div class="post-info">
+                    <time class="post-time gt-c-content-color-first">
+                        · 2022-07-11 ·
+                    </time>
+                    
+                        <a href="https://loyingxi.github.io/tag/leB-IAo-U/" class="post-tags">
+                            # 其他
+                        </a>
+                    
+                </div>
+                <div class="post-content">
+                    <h2 id="使用cloudflare制作镜像站">使用cloudflare制作“镜像站”</h2>
+<h3 id="可以用于间接访问一些打不开的网站例如github">可以用于间接访问一些打不开的网站，例如Github</h3>
+<!-- more -->
+<blockquote>
+<p>注意：Cloudflare是有官方中文的，在界面的右上角可以选择语言。</p>
+</blockquote>
+<p>从官网注册之后，会跳转到转到 https://dash.cloudflare.com/，接下来的步骤都是在控制台进行的。</p>
+<p>在控制面板主页左侧可以找到<code>workers</code>。如图所示，中间可以创建服务，右侧显示每天的额度，如果只是搭建个人服务这些额度绰绰有余了（但是放在网上公开使用大概率会用完，这也是我推荐大家自己搭建的原因）。下方会显示所有已经搭建的服务。</p>
+<p><a href="https://blog.kermsite.com/p/cf-github/image-20220502110006820.png"><img src="https://blog.kermsite.com/p/cf-github/image-20220502110006820.png" alt="image-20220502110006820" loading="lazy"></a>image-20220502110006820</p>
+<p>创建服务，随便填写一个即可，记住下面这个<code>https://xxxx.xxx.workers.dev</code>，此即<strong>镜像站的网址。</strong></p>
+<p><a href="https://blog.kermsite.com/p/cf-github/image-20211213225039559.png"><img src="https://blog.kermsite.com/p/cf-github/image-20211213225039559.png" alt="注意服务名称" loading="lazy"></a>注意服务名称</p>
+<p>等待部署完成，回到 https://dash.cloudflare.com/，workers-点击刚刚创建的项目。转到控制界面，可以找到右下角有一个快速编辑的按钮。</p>
+<p><a href="https://blog.kermsite.com/p/cf-github/image-20211213225206714.png"><img src="https://blog.kermsite.com/p/cf-github/image-20211213225206714.png" alt="个人觉得这个设计十分反人类" loading="lazy"></a>个人觉得这个设计十分反人类</p>
+<p>打开这个窗口，把代码以下复制进去，保存部署，然后直接访问之前我们记下的链接就好了（也可以在控制台看到）。</p>
+<blockquote>
+<p>这是镜像zlibrary的示例，你也可以修改成镜像GitHub。</p>
+</blockquote>
+<p><a href="https://blog.kermsite.com/p/cf-github/image-20220502111948254.png"><img src="https://blog.kermsite.com/p/cf-github/image-20220502111948254.png" alt="image-20220502111948254" loading="lazy"></a>image-20220502111948254</p>
+<pre><code class="language-js">// 你要镜像的网站.
+const upstream = 'zh.u1lib.org'
+
+// 镜像网站的目录，比如你想镜像某个网站的二级目录则填写二级目录的目录名，镜像 google 用不到，默认即可.
+const upstream_path = '/'
+
+// 镜像站是否有手机访问专用网址，没有则填一样的.
+const upstream_mobile = 'zh.u1lib.org'
+
+// 屏蔽国家和地区.
+const blocked_region = ['KP', 'SY', 'PK', 'CU']
+
+// 屏蔽 IP 地址.
+const blocked_ip_address = ['0.0.0.0', '127.0.0.1']
+
+// 镜像站是否开启 HTTPS.
+const https = true
+
+// 文本替换.
+const replace_dict = {
+    '$upstream': '$custom_domain',
+    '//zh.u1lib.org': ''
+}
+
+// 以下保持默认，不要动
+addEventListener('fetch', event =&gt; {
+    event.respondWith(fetchAndApply(event.request));
+})
+
+async function fetchAndApply(request) {
+
+    const region = request.headers.get('cf-ipcountry').toUpperCase();
+    const ip_address = request.headers.get('cf-connecting-ip');
+    const user_agent = request.headers.get('user-agent');
+
+    let response = null;
+    let url = new URL(request.url);
+    let url_hostname = url.hostname;
+
+    if (https == true) {
+        url.protocol = 'https:';
+    } else {
+        url.protocol = 'http:';
+    }
+
+    if (await device_status(user_agent)) {
+        var upstream_domain = upstream;
+    } else {
+        var upstream_domain = upstream_mobile;
+    }
+
+    url.host = upstream_domain;
+    if (url.pathname == '/') {
+        url.pathname = upstream_path;
+    } else {
+        url.pathname = upstream_path + url.pathname;
+    }
+
+    if (blocked_region.includes(region)) {
+        response = new Response('Access denied: WorkersProxy is not available in your region yet.', {
+            status: 403
+        });
+    } else if (blocked_ip_address.includes(ip_address)) {
+        response = new Response('Access denied: Your IP address is blocked by WorkersProxy.', {
+            status: 403
+        });
+    } else {
+        let method = request.method;
+        let request_headers = request.headers;
+        let new_request_headers = new Headers(request_headers);
+
+        new_request_headers.set('Host', url.hostname);
+        new_request_headers.set('Referer', url.hostname);
+
+        let original_response = await fetch(url.href, {
+            method: method,
+            headers: new_request_headers
+        })
+
+        let original_response_clone = original_response.clone();
+        let original_text = null;
+        let response_headers = original_response.headers;
+        let new_response_headers = new Headers(response_headers);
+        let status = original_response.status;
+
+        new_response_headers.set('access-control-allow-origin', '*');
+        new_response_headers.set('access-control-allow-credentials', true);
+        new_response_headers.delete('content-security-policy');
+        new_response_headers.delete('content-security-policy-report-only');
+        new_response_headers.delete('clear-site-data');
+
+        const content_type = new_response_headers.get('content-type');
+        if (content_type.includes('text/html') &amp;&amp; content_type.includes('UTF-8')) {
+            original_text = await replace_response_text(original_response_clone, upstream_domain, url_hostname);
+        } else {
+            original_text = original_response_clone.body
+        }
+
+        response = new Response(original_text, {
+            status,
+            headers: new_response_headers
+        })
+    }
+    return response;
+}
+
+async function replace_response_text(response, upstream_domain, host_name) {
+    let text = await response.text()
+
+    var i, j;
+    for (i in replace_dict) {
+        j = replace_dict[i]
+        if (i == '$upstream') {
+            i = upstream_domain
+        } else if (i == '$custom_domain') {
+            i = host_name
+        }
+
+        if (j == '$upstream') {
+            j = upstream_domain
+        } else if (j == '$custom_domain') {
+            j = host_name
+        }
+
+        let re = new RegExp(i, 'g')
+        text = text.replace(re, j);
+    }
+    return text;
+}
+
+
+async function device_status(user_agent_info) {
+    var agents = [&quot;Android&quot;, &quot;iPhone&quot;, &quot;SymbianOS&quot;, &quot;Windows Phone&quot;, &quot;iPad&quot;, &quot;iPod&quot;];
+    var flag = true;
+    for (var v = 0; v &lt; agents.length; v++) {
+        if (user_agent_info.indexOf(agents[v]) &gt; 0) {
+            flag = false;
+            break;
+        }
+    }
+    return flag;
+}
+</code></pre>
+
+                </div>
+            </article>
+        </div>
+
+        
+
+        
+
+        
+
+        
+
+        <div class="site-footer gt-c-content-color-first">
+    <div class="slogan gt-c-content-color-first">谷神不死，是谓玄牝</div>
+    <div class="social-container">
+        
+            
+                <a href="https://github.com/loyingxi" target="_blank">
+                    <i class="fab fa-github gt-c-content-color-first"></i>
+                </a>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+    </div>
+    <div class="footer-info">
+        &copy 2022 洛颍希	&nbsp;	&nbsp;
+</br><span id="jinrishici-sentence">正在加载今日诗词....</span>
+<script src="https://sdk.jinrishici.com/v2/browser/jinrishici.js" charset="utf-8"></script>
+    </div>
+</div>
+
+<script>
+  hljs.initHighlightingOnLoad()
+</script>
+
+    </div>
+</div>
+</body>
+</html>
